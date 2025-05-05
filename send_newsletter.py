@@ -1,24 +1,25 @@
 import os
+import sys
 import resend
 import markdown2
 
-# Load Resend API key
 resend.api_key = os.environ["RESEND_API_KEY"]
 
-# Load markdown content
-with open("newsletter.md", "r") as file:
+# Get input filename
+filename = sys.argv[1] if len(sys.argv) > 1 else "newsletter.md"
+
+# Load and convert
+with open(filename, "r") as file:
     markdown_text = file.read()
 
-# Convert to HTML
 html_content = markdown2.markdown(markdown_text)
 
-# Prepare and send email
 params = {
-    "from": "Ethereum Weekly <your@verifieddomain.com>",  # Must be verified
+    "from": "Ethereum Weekly <your@verifieddomain.com>",
     "to": [os.environ["NEWSLETTER_RECIPIENT"]],
     "subject": "🚀 Weekly Ethereum Newsletter",
     "html": html_content,
 }
 
 res = resend.Emails.send(params)
-print("✅ Sent! Response:", res)
+print("✅ Newsletter sent! Response:", res)
