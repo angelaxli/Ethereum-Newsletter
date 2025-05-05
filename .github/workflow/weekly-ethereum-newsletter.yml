@@ -1,0 +1,66 @@
+name: Weekly Ethereum Newsletter
+
+on:
+  schedule:
+    # Every Monday 12:00 UTC
+    - cron: '0 12 * * 1'
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  generate-and-send:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate timestamp
+        id: generate-timestamp
+        run: echo "TIMESTAMP=$(date +'%Y%m%d')" >> $GITHUB_ENV
+
+      - name: Generate Ethereum Newsletter via OpenHands
+        uses: xinbenlv/openhands-action@v1.0.1-rc3
+        with:
+          prompt: >-
+            Please summarize the latest news from the Ethereum ecosystem 
+            over the past 7 days. Include updates from blog.ethereum.org, 
+            ethereum/pm GitHub, ethresear.ch, and ethereum-magicians.org. 
+            Emphasize major network upgrades, new EIPs, and official blog posts 
+            and highlight at the top of the output.Format like WeekInEthereum
+            (https://weekinethereum.substack.com/p/week-in-ethereum-news-december-28-eb1), 
+            in markdown, with all original links and references.
+            
+            Save the result to: newsletter_${{ env.TIMESTAMP }}.md
+            Use date range: past 7 days
+          llm_api_key: ${{ secrets.LLM_API_KEY }}
+
+      - name: Upload Summary Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-ethereum-newsletter
+          path: newsletter_*.md
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Send Ethereum Newsletter via Resend
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          NEWSLETTER_RECIPIENT: ${{ secrets.NEWSLETTER_RECIPIENT }}
+        run: |
+          # Find the latest newsletter file
+          export FILE=$(ls newsletter_*.md | tail -n 1)
+          echo "Using $FILE"
+          python send_newsletter.py "$FILE"
