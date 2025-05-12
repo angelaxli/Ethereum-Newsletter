@@ -33,6 +33,24 @@ jobs:
             (https://weekinethereum.substack.com/p/week-in-ethereum-news-december-28-eb1), 
             in markdown, with all original links and references.
             
+            Structure the output into the following Markdown sections:
+            1. **Intro Paragraph** – Summarize the week’s key news in 1-2 sentences.
+            2. **Network Upgrades** – Mainnet/testnet upgrades, core dev meeting decisions.
+            3. **EIPs & Standards** – New/finalized EIPs/ERCs. Include links and status tags.
+            4. **Client Releases** – Execution & consensus layer client updates, grouped separately.
+            5. **Research & Development** – Notable technical research or protocol analysis.
+            6. **Ecosystem & Community** – Announcements, education, programs, partnerships.
+            7. **Centralization Watch** – Inject stats from context_stats.md below.
+            8. **Upcoming Dates** – Events, upgrade activations, hackathons.
+            
+            Use concise, link-rich markdown formatting. No TL;DR. Use a serious, editorial tone. 
+            Do not use emojis unless for critical alerts (e.g. centralization risk).
+            External context (inline below):
+            
+            ```markdown
+            {{ context_stats }}
+            {{ context_eips }}
+            
             Save the result to: newsletter_${{ env.TIMESTAMP }}.md
             Use date range: past 7 days
           llm_api_key: ${{ secrets.LLM_API_KEY }}
