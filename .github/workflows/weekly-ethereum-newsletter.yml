@@ -60,9 +60,7 @@ jobs:
             Use concise, link-rich markdown formatting. No TL;DR. Use a serious, editorial tone. 
             Do not use emojis unless for critical alerts (e.g. centralization risk).
 
-            Save the result to: newsletter_${{ env.TIMESTAMP }}.md
             Use date range: past 7 days
-            
             External context (inline below):
             
             ```markdown
@@ -74,6 +72,7 @@ jobs:
             context/context_eips.md
           
           llm_api_key: ${{ secrets.LLM_API_KEY }}
+          output: newsletter.md 
 
       - name: Install dependencies
         run: |
@@ -84,8 +83,9 @@ jobs:
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           NEWSLETTER_RECIPIENT: ${{ secrets.NEWSLETTER_RECIPIENT }}
+        run: python scripts/send_newsletter.py newsletter.md
+      
+      - name: Archive Final Newsletter
         run: |
-          # Find the latest newsletter file
-          export FILE=$(ls newsletter_*.md | tail -n 1)
-          echo "Using $FILE"
-          python scripts/send_newsletter.py "$FILE"
+          mkdir -p newsletters
+          cp newsletter.md newsletters/newsletter_${{ env.TIMESTAMP }}.md
