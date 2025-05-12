@@ -21,6 +21,22 @@ jobs:
         id: generate-timestamp
         run: echo "TIMESTAMP=$(date +'%Y%m%d')" >> $GITHUB_ENV
 
+      - name: Fetch Client Stats
+        run: python scripts/fetch_client_stats.py
+      
+      - name: Fetch EIPs Summary
+        run: python scripts/fetch_new_eips.py
+
+      - name: Generate Newsletter with OpenHands
+        uses: xinbenlv/openhands-action@v1.0.1-rc3
+        with:
+          prompt: >-
+          [  COPY THE PROMPT BLOCK FROM ABOVE]
+          files: |
+            context/context_stats.md
+            context/context_eips.md
+          llm_api_key: ${{ secrets.LLM_API_KEY }}
+
       - name: Generate Ethereum Newsletter via OpenHands
         uses: xinbenlv/openhands-action@v1.0.1-rc3
         with:
@@ -51,9 +67,13 @@ jobs:
             {{ context_stats }}
             {{ context_eips }}
             
+            files: |
+            context/context_stats.md
+            context/context_eips.md
+            
             Save the result to: newsletter_${{ env.TIMESTAMP }}.md
             Use date range: past 7 days
-          llm_api_key: ${{ secrets.LLM_API_KEY }}
+            llm_api_key: ${{ secrets.LLM_API_KEY }}
 
       - name: Upload Summary Report
         uses: actions/upload-artifact@v4
@@ -82,3 +102,5 @@ jobs:
           export FILE=$(ls newsletter_*.md | tail -n 1)
           echo "Using $FILE"
           python send_newsletter.py "$FILE"
+
+          
