@@ -66,14 +66,14 @@ jobs:
             ```markdown
             {{ context_stats }}
             {{ context_eips }}
-            
-            files: |
+            ```
+          files: |
             context/context_stats.md
             context/context_eips.md
             
-            Save the result to: newsletter_${{ env.TIMESTAMP }}.md
-            Use date range: past 7 days
-            llm_api_key: ${{ secrets.LLM_API_KEY }}
+          Save the result to: newsletter_${{ env.TIMESTAMP }}.md
+          Use date range: past 7 days
+          llm_api_key: ${{ secrets.LLM_API_KEY }}
 
       - name: Upload Summary Report
         uses: actions/upload-artifact@v4
