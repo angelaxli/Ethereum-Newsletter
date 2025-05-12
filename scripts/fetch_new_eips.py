@@ -1,4 +1,3 @@
-```python
 import os, re, tempfile, git, yaml, shutil
 
 REPO_URL = "https://github.com/ethereum/EIPs.git"
