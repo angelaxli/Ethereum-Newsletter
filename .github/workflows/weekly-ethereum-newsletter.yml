@@ -69,9 +69,8 @@ jobs:
             context/context_stats.md
             context/context_eips.md
             
-          Save the result to: newsletter_${{ env.TIMESTAMP }}.md
-          Use date range: past 7 days
           llm_api_key: ${{ secrets.LLM_API_KEY }}
+          output: newsletter_$(date +%Y-%m-%d).md
 
       - name: Upload Summary Report
         uses: actions/upload-artifact@v4
@@ -86,14 +85,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Send Ethereum Newsletter via Resend
+      - name: Send Newsletter via Resend
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           NEWSLETTER_RECIPIENT: ${{ secrets.NEWSLETTER_RECIPIENT }}
         run: |
-          # Find the latest newsletter file
           export FILE=$(ls newsletter_*.md | tail -n 1)
           echo "Using $FILE"
-          python scripts/end_newsletter.py "$FILE"
-
+          python scripts/send_newsletter.py "$FILE"
           
