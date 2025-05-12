@@ -70,7 +70,7 @@ jobs:
             context/context_eips.md
             
           llm_api_key: ${{ secrets.LLM_API_KEY }}
-          output: newsletter_$(date +%Y-%m-%d).md
+          output: newsletter.md
 
       - name: Upload Summary Report
         uses: actions/upload-artifact@v4
@@ -90,7 +90,10 @@ jobs:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           NEWSLETTER_RECIPIENT: ${{ secrets.NEWSLETTER_RECIPIENT }}
         run: |
-          export FILE=$(ls newsletter_*.md | tail -n 1)
-          echo "Using $FILE"
-          python scripts/send_newsletter.py "$FILE"
+          echo "Using newsletter.md"
+          python scripts/send_newsletter.py newsletter.md
+      - name: Archive Newsletter
+        run: |
+          mkdir -p newsletters
+          cp newsletter.md newsletters/newsletter_$(date +%Y-%m-%d).md
           
