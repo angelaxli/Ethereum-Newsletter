@@ -75,10 +75,6 @@ jobs:
           
           llm_api_key: ${{ secrets.LLM_API_KEY }}
 
-          
-      - name: Save OpenHands Output to newsletter.md
-        run: echo "${{ steps.generate.outputs.output }}" > newsletter.md
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
