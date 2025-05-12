@@ -59,6 +59,10 @@ jobs:
             
             Use concise, link-rich markdown formatting. No TL;DR. Use a serious, editorial tone. 
             Do not use emojis unless for critical alerts (e.g. centralization risk).
+
+            Save the result to: newsletter_${{ env.TIMESTAMP }}.md
+            Use date range: past 7 days
+            
             External context (inline below):
             
             ```markdown
@@ -68,8 +72,9 @@ jobs:
           files: |
             context/context_stats.md
             context/context_eips.md
-            
+          
           llm_api_key: ${{ secrets.LLM_API_KEY }}
+
           
       - name: Save OpenHands Output to newsletter.md
         run: echo "${{ steps.generate.outputs.output }}" > newsletter.md
@@ -79,14 +84,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Send Newsletter via Resend
+      - name: Send Ethereum Newsletter via Resend
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           NEWSLETTER_RECIPIENT: ${{ secrets.NEWSLETTER_RECIPIENT }}
-        run: python scripts/send_newsletter.py newsletter.md
-        
-      - name: Archive Newsletter
         run: |
-          mkdir -p newsletters
-          cp newsletter.md newsletters/newsletter_$(date +%Y-%m-%d).md
-          
+          # Find the latest newsletter file
+          export FILE=$(ls newsletter_*.md | tail -n 1)
+          echo "Using $FILE"
+          python scripts/send_newsletter.py "$FILE"
