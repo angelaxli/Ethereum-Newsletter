@@ -69,18 +69,13 @@ jobs:
             Do not use emojis unless for critical alerts (e.g. centralization risk).
             Use only updates relevant to the past 7 days: from ${{ env.START_DATE }} to ${{ env.END_DATE }}.
             Ignore older news unless it had major status changes this week.
-
-            External context:
-
-            ```markdown
-            {{ context_stats }}
-            {{ context_eips }}
-            ```
-          files: |
-            context/context_stats.md
-            context/context_eips.md
+            
           llm_api_key: ${{ secrets.LLM_API_KEY }}
-          output: newsletter.md
+          
+      - name: Save newsletter to file
+        run: |
+          mkdir -p newsletters
+          echo "${{ steps.openhands.outputs.output }}" > newsletters/newsletter.md
 
       - name: Archive Newsletter with Timestamp
         run: cp newsletter.md newsletters/newsletter_${{ env.TIMESTAMP }}.md
