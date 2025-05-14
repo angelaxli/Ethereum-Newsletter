@@ -73,23 +73,25 @@ jobs:
             
           llm_api_key: ${{ secrets.LLM_API_KEY }}
           
-      - name: Save newsletter to file
+      - name: Save newsletter output to file
+        run: |
+          printf "%s" "${{ steps.openhands.outputs.output }}" > newsletter.md
+
+      - name: Archive newsletter in folder
         run: |
           mkdir -p newsletters
-          printf "%s" "${{ steps.openhands.outputs.output }}" | tee newsletters/newsletter.md > /dev/null
+          mv newsletter.md newsletters/newsletter.md
+          cp newsletters/newsletter.md newsletters/newsletter_${{ env.END_DATE }}.md
 
-      - name: Archive Newsletter with Timestamp
-        run: cp newsletter.md newsletters/newsletter_${{ env.TIMESTAMP }}.md
-      
-      - name: Send Newsletter via Resend
+      - name: Send newsletter via Resend
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           NEWSLETTER_RECIPIENT: ${{ secrets.NEWSLETTER_RECIPIENT }}
         run: |
-          python scripts/send_newsletter.py newsletter.md
+          python scripts/send_newsletter.py newsletters/newsletter.md
 
-      - name: Upload Final Markdown Artifact
+      - name: Upload Markdown artifact
         uses: actions/upload-artifact@v4
         with:
           name: ethereum-weekly-newsletter
-          path: newsletters/newsletter_${{ env.TIMESTAMP }}.md
+          path: newsletters/newsletter_${{ env.END_DATE }}.md
