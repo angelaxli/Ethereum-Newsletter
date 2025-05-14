@@ -76,7 +76,7 @@ jobs:
       - name: Save newsletter to file
         run: |
           mkdir -p newsletters
-          echo "${{ steps.openhands.outputs.output }}" > newsletters/newsletter.md
+          printf "%s" "${{ steps.openhands.outputs.output }}" | tee newsletters/newsletter.md > /dev/null
 
       - name: Archive Newsletter with Timestamp
         run: cp newsletter.md newsletters/newsletter_${{ env.TIMESTAMP }}.md
