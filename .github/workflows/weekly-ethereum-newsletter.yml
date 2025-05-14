@@ -10,30 +10,38 @@ on:
   workflow_dispatch:
 
 jobs:
-  generate-and-send:
+  generate:
     runs-on: ubuntu-latest
+
+    env:
+      TIMESTAMP: ${{ github.run_started_at || 'manual' }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Generate timestamp
-        id: generate-timestamp
-        run: echo "TIMESTAMP=$(date +'%Y%m%d')" >> $GITHUB_ENV
-      
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
       - name: Install Python dependencies
-        run: pip install requests beautifulsoup4 PyYAML gitpython
+        run: |
+          pip install requests beautifulsoup4 PyYAML gitpython markdown2 resend
 
-      - name: Fetch Client Diversity Stats
+      - name: Prepare context folder
+        run: mkdir -p context newsletters
+
+      - name: Fetch Client Stats
         run: python scripts/fetch_client_stats.py
-      
-      - name: Fetch EIPs Summary
+
+      - name: Fetch New EIPs
         run: python scripts/fetch_new_eips.py
+      
+      - name: Set START_DATE and END_DATE
+        run: |
+          echo "START_DATE=$(date -d '7 days ago' +%Y-%m-%d)" >> $GITHUB_ENV
+          echo "END_DATE=$(date +%Y-%m-%d)" >> $GITHUB_ENV
 
       - name: Generate Ethereum Newsletter via OpenHands
         uses: xinbenlv/openhands-action@v1.0.1-rc3
@@ -59,10 +67,11 @@ jobs:
             
             Use concise, link-rich markdown formatting. No TL;DR. Use a serious, editorial tone. 
             Do not use emojis unless for critical alerts (e.g. centralization risk).
+            Use only updates relevant to the past 7 days: from ${{ env.START_DATE }} to ${{ env.END_DATE }}.
+            Ignore older news unless it had major status changes this week.
 
-            Use date range: past 7 days
-            External context (inline below):
-            
+            External context:
+
             ```markdown
             {{ context_stats }}
             {{ context_eips }}
@@ -70,22 +79,21 @@ jobs:
           files: |
             context/context_stats.md
             context/context_eips.md
-          
           llm_api_key: ${{ secrets.LLM_API_KEY }}
-          output: newsletter.md 
+          output: newsletter.md
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Send Ethereum Newsletter via Resend
+      - name: Archive Newsletter with Timestamp
+        run: cp newsletter.md newsletters/newsletter_${{ env.TIMESTAMP }}.md
+      
+      - name: Send Newsletter via Resend
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           NEWSLETTER_RECIPIENT: ${{ secrets.NEWSLETTER_RECIPIENT }}
-        run: python scripts/send_newsletter.py newsletter.md
-      
-      - name: Archive Final Newsletter
         run: |
-          mkdir -p newsletters
-          cp newsletter.md newsletters/newsletter_${{ env.TIMESTAMP }}.md
+          python scripts/send_newsletter.py newsletter.md
+
+      - name: Upload Final Markdown Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ethereum-weekly-newsletter
+          path: newsletters/newsletter_${{ env.TIMESTAMP }}.md
