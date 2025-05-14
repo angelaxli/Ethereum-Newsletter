@@ -44,6 +44,7 @@ jobs:
           echo "END_DATE=$(date +%Y-%m-%d)" >> $GITHUB_ENV
 
       - name: Generate Ethereum Newsletter via OpenHands
+        id: openhands
         uses: xinbenlv/openhands-action@v1.0.1-rc3
         with:
           prompt: >-
