@@ -25,18 +25,26 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install Python dependencies
+      - name: Install dependencies
         run: |
           pip install requests beautifulsoup4 PyYAML gitpython markdown2 resend
 
-      - name: Prepare context folder
-        run: mkdir -p context newsletters
+      - name: Generate date range
+        run: |
+          echo "START_DATE=$(date -d '7 days ago' +%Y-%m-%d)" >> $GITHUB_ENV
+          echo "END_DATE=$(date +%Y-%m-%d)" >> $GITHUB_ENV
 
-      - name: Fetch Client Stats
+      - name: Prepare context
+        run: mkdir -p context
+
+      - name: Fetch client diversity stats
         run: python scripts/fetch_client_stats.py
 
-      - name: Fetch New EIPs
+      - name: Fetch EIPs
         run: python scripts/fetch_new_eips.py
+
+      - name: Fetch ERCs
+        run: python scripts/fetch_new_ercs.py
       
       - name: Set START_DATE and END_DATE
         run: |
@@ -70,33 +78,21 @@ jobs:
             Do not use emojis unless for critical alerts (e.g. centralization risk).
             Use only updates relevant to the past 7 days: from ${{ env.START_DATE }} to ${{ env.END_DATE }}.
             Ignore older news unless it had major status changes this week.
+
+            Include this inline context:
             
+            {{ context_stats }}
+            {{ context_eips }}
+            {{ context_ercs }}
           llm_api_key: ${{ secrets.LLM_API_KEY }}
           
-      - name: Upload Summary Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: weekly-ethereum-newsletter
-          path: newsletter_*.md
-          retention-days: 14
-          if-no-files-found: warn
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install dependencies
+      - name: Save newsletter output
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          printf "%s" "${{ steps.openhands.outputs.output }}" > $GITHUB_WORKSPACE/newsletter.md
 
-      - name: Send Ethereum Newsletter via Resend
+      - name: Send newsletter via Resend
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           NEWSLETTER_RECIPIENT: ${{ secrets.NEWSLETTER_RECIPIENT }}
         run: |
-          # Find the latest newsletter file
-          export FILE=$(ls newsletter_*.md | tail -n 1)
-          echo "Using $FILE"
-          python send_newsletter.py "$FILE"
+          python scripts/send_newsletter.py newsletter.md
